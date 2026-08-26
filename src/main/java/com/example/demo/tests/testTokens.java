@@ -1,7 +1,7 @@
-package com.example.demo.token;
+package com.example.demo.tests;
+
 import java.util.*;
 
-import com.example.demo.tests.testTokens;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -9,8 +9,7 @@ import java.util.Date;
 import io.jsonwebtoken.Jwt;
 
 import javax.crypto.SecretKey;
-
-public class JwtUtil {
+public class testTokens {
     private final SecretKey key = Jwts.SIG.HS256.key().build();
     public String generateToken(String username) {
         Date date = new Date();
