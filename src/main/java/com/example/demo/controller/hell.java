@@ -3,7 +3,10 @@ package com.example.demo.controller;
 import com.example.demo.model.Task;
 import com.example.demo.model.User;
 import com.example.demo.service.TaskService;
+import com.example.demo.token.JwtUtil;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,9 +18,13 @@ import java.util.*;
 public class hell {
     private final TaskService taskService;
     private final UserService userService;
-    public hell(TaskService taskService, UserService userService) {
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    public hell(TaskService taskService, UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.taskService = taskService;
         this.userService = userService;
+        this.authenticationManager = authenticationManager ;
+        this.jwtUtil = jwtUtil;
     }
     @PostMapping("/tasks")
     public ResponseEntity<Task> CreateTask(@RequestBody Task task) {
@@ -64,5 +71,19 @@ public class hell {
             return ResponseEntity.status(409).build();
         }
         return ResponseEntity.status(201).body(n.getUsername());
+    }
+    public record LoginInfo(String username, String password) {}
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginInfo loginInfo) {
+        String username = loginInfo.username ;
+        String password = loginInfo.password ;
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        try {
+            authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+            String token = jwtUtil.generateToken(username);
+            return ResponseEntity.ok(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).build();
+        }
     }
 }
