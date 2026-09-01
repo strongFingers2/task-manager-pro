@@ -37,7 +37,7 @@ public class SecurityConfig {
     }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth->auth.requestMatchers("/register", "/h2-console/**").permitAll()
+        http.authorizeHttpRequests(auth->auth.requestMatchers("/register", "/h2-console/**", "/login").permitAll()
                 .anyRequest().authenticated()).csrf(AbstractHttpConfigurer::disable).headers(headers -> headers.frameOptions(frame -> frame.disable())).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();

@@ -2,8 +2,10 @@ package com.example.demo.token;
 
 import java.util.*;
 import io.jsonwebtoken.Jwts;
-import javax.crypto.SecretKey;
+import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+@Component
 public class JwtUtil {
     private final SecretKey key = Jwts.SIG.HS256.key().build();
 
