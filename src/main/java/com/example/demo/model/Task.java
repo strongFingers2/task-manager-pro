@@ -2,26 +2,29 @@ package com.example.demo.model;
 
 import jakarta.persistence.*;
 
+
 @Entity
 @Table(name = "task")
 public class Task {
-
-    private String Title;
+    private String title;
     private String description;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="user_id")
+    private User owner;
     public Task() {
 
     }
     public String getTitle() {
-        return Title;
+        return title;
     }
     public String getDescription() {
         return description;
     }
     public void setTitle(String Title) {
-        this.Title = Title;
+        this.title = Title;
     }
     public void setDescription(String description) {
         this.description = description;
@@ -31,5 +34,11 @@ public class Task {
     }
     public void setId(long id) {
         this.id = id;
+    }
+    public User getOwner() {
+        return owner ;
+    }
+    public void setOwner(User user) {
+        owner = user;
     }
 }

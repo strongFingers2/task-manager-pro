@@ -7,6 +7,8 @@ import com.example.demo.token.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +29,14 @@ public class hell {
         this.jwtUtil = jwtUtil;
     }
     @PostMapping("/tasks")
-    public ResponseEntity<Task> CreateTask(@RequestBody Task task) {
+    public ResponseEntity<Task> createTask(@RequestBody Task task, @AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+        Optional<User> user = userService.getUserByUsername(username);
+        if (!user.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        task.setOwner(user.get());
         Task create = taskService.createTask(task);
         return ResponseEntity.status(201).body(create);
     }
@@ -52,10 +61,16 @@ public class hell {
         return taskService.getAllTasks();
     }
     @GetMapping("/tasks/{id}")
-    public ResponseEntity<Task> getTaskByid(@PathVariable Long id) {
+    public ResponseEntity<Task> getTaskById(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
         Optional<Task> desire = taskService.getTaskById(id);
         if (desire.isPresent()) {
-            return ResponseEntity.ok(desire.get());
+            String username = userDetails.getUsername();
+            if (userService.getUserByUsername(username).get().getId() == desire.get().getOwner().getId()) {
+                return ResponseEntity.ok(desire.get());
+            }
+            else {
+                return ResponseEntity.status(403).build();
+            }
         }
         return ResponseEntity.notFound().build();
     }
