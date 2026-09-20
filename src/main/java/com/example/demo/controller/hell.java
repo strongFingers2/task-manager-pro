@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.service.UserService;
-
+import com.example.demo.DTO.TaskResponseDTO;
 import java.util.*;
 
 @RestController
@@ -29,7 +29,7 @@ public class hell {
         this.jwtUtil = jwtUtil;
     }
     @PostMapping("/tasks")
-    public ResponseEntity<Task> createTask(@RequestBody Task task, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<TaskResponseDTO> createTask(@RequestBody Task task, @AuthenticationPrincipal UserDetails userDetails) {
 
         String username = userDetails.getUsername();
         Optional<User> user = userService.getUserByUsername(username);
@@ -38,21 +38,37 @@ public class hell {
         }
         task.setOwner(user.get());
         Task create = taskService.createTask(task);
-        return ResponseEntity.status(201).body(create);
+        TaskResponseDTO taskResponseDTO = new TaskResponseDTO(create);
+        return ResponseEntity.ok(taskResponseDTO);
     }
     @PutMapping("/tasks/{id}")
-    public ResponseEntity<Task> UpdateTask(@PathVariable long id, @RequestBody Task task) {
-
-        Optional<Task> t = taskService.updateTask(id, task);
-        if (!t.isPresent()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable long id, @RequestBody Task task, @AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        Optional<Task> target = taskService.getTaskById(id);
+        if (target.isPresent()) {
+            Task targetTask = target.get();
+            if (targetTask.getOwner().getId() == userService.getUserByUsername(username).get().getId()) {
+                Optional<Task> t = taskService.updateTask(id, task);
+                TaskResponseDTO taskResponseDTO = new TaskResponseDTO(t.get());
+                return ResponseEntity.ok(taskResponseDTO);
+            }
+            else {
+                return ResponseEntity.status(403).body(null);
+            }
         }
-        return ResponseEntity.ok(t.get());
+        return ResponseEntity.notFound().build();
     }
     @DeleteMapping("/tasks/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable long id) {
-        if (taskService.deleteTask(id)) {
-            return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteTask(@PathVariable long id, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<Task> t = taskService.getTaskById(id);
+        String username = userDetails.getUsername();
+        if (t.isPresent()) {
+            Task task = t.get();
+            if (task.getOwner().getId() == userService.getUserByUsername(username).get().getId()) {
+                taskService.deleteTask(id);
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.status(403).build();
         }
         return ResponseEntity.notFound().build();
     }
@@ -61,12 +77,14 @@ public class hell {
         return taskService.getAllTasks();
     }
     @GetMapping("/tasks/{id}")
-    public ResponseEntity<Task> getTaskById(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
+    public ResponseEntity<TaskResponseDTO> getTaskById(@AuthenticationPrincipal UserDetails userDetails, @PathVariable long id) {
         Optional<Task> desire = taskService.getTaskById(id);
         if (desire.isPresent()) {
             String username = userDetails.getUsername();
             if (userService.getUserByUsername(username).get().getId() == desire.get().getOwner().getId()) {
-                return ResponseEntity.ok(desire.get());
+
+                TaskResponseDTO taskResponseDTO = new TaskResponseDTO(desire.get());
+                return ResponseEntity.ok(taskResponseDTO);
             }
             else {
                 return ResponseEntity.status(403).build();
